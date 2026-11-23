@@ -36,3 +36,17 @@
  .month-group{width:100%;flex:none}
  .month-dates .report-link{min-width:0}
 }
+
+
+/* Fix monthly report list scrolling inside the sidebar */
+.sidebar{min-height:0}
+.monthly-report-list{flex:1 1 auto;min-height:0;max-height:calc(100vh - 285px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}
+.monthly-report-list .month-group{flex:none}
+.month-dates{min-height:0}
+@media(max-width:900px){
+ .sidebar{min-height:0}
+ .monthly-report-list{flex:0 1 auto;min-height:0;max-height:42vh;overflow-y:auto;overflow-x:hidden}
+}
+@media(max-width:720px){
+ .monthly-report-list{display:flex;flex-direction:column;max-height:42vh;overflow-y:auto;overflow-x:hidden}
+}
