@@ -236,7 +236,7 @@ function App() {
         </div>
         <div className="sidebar-foot"><ShieldCheck size={16}/><span>Role-based access enabled</span></div>
       </aside>
-      <main className="content">{notice && <div className="notice-success">{notice}</div>}{view === "reports" ? <>{
+      <main className="content">{notice && <div className="notice-success">{notice}</div>}{view === "reports" ? <>
         <div className="page-heading">
           <div><p className="eyebrow">ATTENDANCE OVERVIEW</p><h1>Daily reports</h1><p className="muted">Review attendance, identify exceptions and track resolutions.</p></div>
           <div className="heading-actions"><button className="secondary-btn" onClick={loadReports}><RefreshCw size={16}/> Refresh</button>
