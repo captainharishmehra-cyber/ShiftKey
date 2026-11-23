@@ -1,15 +1,27 @@
 # ShiftKey React frontend
 
-This is the first migration slice of the ShiftKey frontend. It is built with React, Vite and Lucide icons and talks directly to the existing FastAPI endpoints on the same origin.
+The React/Vite frontend is being migrated in stages while the current FastAPI backend and PostgreSQL data remain unchanged.
 
-## Local development
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## Preview locally
 
-The Vite dev server needs a proxy to the FastAPI server for local API calls if it runs on a different port. The production build is emitted to `app/static/react/` and is available at `/static/react/index.html`.
+1. Run `cd frontend && npm install && npm run dev`.
+2. Vite opens on port 5173 and proxies `/api` requests to FastAPI on `http://localhost:8000`.
 
-## Migration safety
-The current production frontend remains at `/` during the staged migration. This preview currently covers authentication, report selection, report summaries, employee search/filtering and Excel export. Corrections, audit, user administration, shifts and SQL integrations must be migrated and parity-tested before the React app replaces the existing entry point. No backend or database schema changes are part of this frontend work.
+## Production preview
+
+The Docker build compiles the React app into `app/static/react/`. After deploying the image, open `/static/react/index.html`.
+
+The current production frontend at `/` remains unchanged until parity and acceptance checks are complete.
+
+## Migrated workflows
+
+- Login, session handling, role-aware navigation and mandatory password changes
+- Daily attendance reports, employee search, department/status filters and CSV/Excel exports
+- Attendance corrections, revert-to-machine-values and per-record history
+- Correction history and audit trail, audit integrity verification and export
+- User and department administration, shifts and active-session revocation
+- SQL connections, synchronization job configuration, scheduling and run history
+
+The React frontend intentionally does not add a manual recurring Excel upload workflow. Historical attendance remains in the existing database; ongoing attendance should use the configured Starlink biometric synchronization.
+
+No backend route, database schema, PostgreSQL volume or attendance record is replaced by this frontend migration.
