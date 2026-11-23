@@ -38,6 +38,7 @@ function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError("");
@@ -223,7 +224,7 @@ function App() {
         </div>
         <div className="sidebar-foot"><ShieldCheck size={16}/><span>Role-based access enabled</span></div>
       </aside>
-      <main className="content">{view === "reports" ? <>{
+      <main className="content">{notice && <div className="notice-success">{notice}</div>}{view === "reports" ? <>{
         <div className="page-heading">
           <div><p className="eyebrow">ATTENDANCE OVERVIEW</p><h1>Daily reports</h1><p className="muted">Review attendance, identify exceptions and track resolutions.</p></div>
           <div className="heading-actions"><button className="secondary-btn" onClick={loadReports}><RefreshCw size={16}/> Refresh</button>
@@ -267,7 +268,7 @@ function App() {
         </form></section></div>}
         {historyRecord && <div className="feature-overlay" onMouseDown={e=>e.target===e.currentTarget&&setHistoryRecord(null)}><section className="feature-dialog"><header><h3>Attendance history</h3><button className="icon-btn" onClick={()=>setHistoryRecord(null)}>×</button></header><div className="feature-form"><b>{historyRecord.record?.name} · {historyRecord.record?.paycode}</b><p>{historyRecord.report?.report_date} · {historyRecord.report?.source_filename}</p><h4>Event history</h4>{(historyRecord.events||[]).map(e=><div className="history-line" key={e.id}><b>{e.action_label || e.action}</b><small>{e.ts} · {e.actor?.name || e.actor?.username || "System"}</small><p>{e.summary}</p></div>)}<h4>Other attendance days</h4>{(historyRecord.other_days||[]).map(d=><p key={d.record_id}>{d.report_date}: {d.time_in||"—"} → {d.time_out||"—"} · {d.status}</p>)}</div></section></div>}
         <footer className="page-footer">ShiftKey · React frontend preview <span>Existing HRMS services and data</span></footer>
-      }</> : <Workspace view={view} user={user} notify={message => setError(message)} />}</main>
+      }</> : <Workspace view={view} user={user} notify={message => setNotice(message)} />}</main>
     </div>
     {showPassword && <div className="feature-overlay"><section className="feature-dialog"><header><h3>{user.must_change_password ? "Set a new password" : "Change password"}</h3>{!user.must_change_password && <button className="icon-btn" onClick={()=>setShowPassword(false)}>×</button>}</header><form className="feature-form" onSubmit={changePassword}>
       <p className="muted">{user.must_change_password ? "Your account requires a password update before you continue." : "Choose a new password for your ShiftKey account."}</p>
