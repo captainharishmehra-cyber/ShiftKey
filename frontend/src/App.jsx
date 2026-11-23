@@ -86,6 +86,7 @@ function App() {
   const [fixRecord, setFixRecord] = useState(null);
   const [fixForm, setFixForm] = useState({action:"shift_time",field:"out",time:"",remark:""});
   const [historyRecord, setHistoryRecord] = useState(null);
+  const [reportHistory, setReportHistory] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({current_password:"",new_password:""});
   const [passwordError, setPasswordError] = useState("");
@@ -169,6 +170,7 @@ function App() {
   ]) : visibleRecords.map(renderRecord);
 
   async function openHistory(record) { try { setHistoryRecord(await api(`/api/records/${record.id}/history`)); } catch (err) { setError(err.message); } }
+  async function openReportHistory() { try { setReportHistory(await api(`/api/reports/${selectedId}/history`)); } catch (err) { setError(err.message); } }
 
   function startFix(record) {
     const field = record.time_in && !record.time_out ? "out" : (!record.time_in && record.time_out ? "in" : "out");
@@ -243,7 +245,7 @@ function App() {
         </div>
         {error && <div className="notice-error"><AlertCircle size={17}/>{error}</div>}
         {!detail ? <section className="empty-state"><FileSpreadsheet size={34}/><h2>Select a daily report</h2><p>Choose a date from the report list to see its attendance summary.</p></section> : <>
-          <section className="report-banner"><div><span className="banner-kicker">SELECTED REPORT</span><h2>{dateLabel(detail.report_date)}</h2><p>{detail.company || "ShiftKey"}{detail.title ? ` · ${detail.title}` : ""}</p></div><div className="banner-meta"><span>{detail.source_filename || "Attendance report"}</span><small>Imported {detail.uploaded_at ? new Date(detail.uploaded_at).toLocaleString() : "—"}</small>{user.role==="admin" && detail.source_kind!=="sql" && <a className="banner-source" href={`/api/reports/${detail.id}/source`}>Download original source</a>}</div></section>
+          <section className="report-banner"><div><span className="banner-kicker">SELECTED REPORT</span><h2>{dateLabel(detail.report_date)}</h2><p>{detail.company || "ShiftKey"}{detail.title ? ` · ${detail.title}` : ""}</p></div><div className="banner-meta"><span>{detail.source_filename || "Attendance report"}</span><small>Imported {detail.uploaded_at ? new Date(detail.uploaded_at).toLocaleString() : "—"}</small><button className="banner-history" onClick={openReportHistory}>Report activity</button>{user.role==="admin" && detail.source_kind!=="sql" && <a className="banner-source" href={`/api/reports/${detail.id}/source`}>Download original source</a>}</div></section>
           <section className="metrics-grid">
             <Metric icon={Users} label="Total employees" value={summary.total ?? detail.total} tone="blue" note="In your access scope"/>
             <Metric icon={CheckCircle2} label="Present" value={summary.present ?? detail.present} tone="green"/>
@@ -270,6 +272,7 @@ function App() {
             {!filtered.length && <div className="empty-table">No employees match these filters.</div>}
           </section>
         </>}
+        {reportHistory && <div className="feature-overlay" onMouseDown={e=>e.target===e.currentTarget&&setReportHistory(null)}><section className="feature-dialog"><header><h3>Report activity history</h3><button className="icon-btn" onClick={()=>setReportHistory(null)}>×</button></header><div className="feature-form">{reportHistory.map(e=><div className="history-line" key={e.id}><b>{e.action_label||e.action}</b><small>{e.ts} · {e.actor?.name||e.actor?.username||"System"}</small><p>{e.summary}</p></div>)}</div></section></div>}
         {fixRecord && <div className="feature-overlay"><section className="feature-dialog"><header><h3>Correct attendance · {fixRecord.name}</h3><button className="icon-btn" onClick={()=>setFixRecord(null)}>×</button></header><form className="feature-form" onSubmit={submitFix}>
           <p className="muted">Current punches: {fixRecord.time_in || "—"} → {fixRecord.time_out || "—"} · {fixRecord.status_label || fixRecord.status}</p>
           <label className="feature-field"><span>Correction method</span><select value={fixForm.action} onChange={e=>setFixForm(f=>({...f,action:e.target.value}))}><option value="shift_time">Use scheduled shift time</option><option value="set_time">Enter a time manually</option><option value="halfday">Mark as half day</option><option value="absent">Mark as absent</option></select></label>
