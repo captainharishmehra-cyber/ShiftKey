@@ -97,6 +97,9 @@ function App() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [department, setDepartment] = useState("all");
+  const [exportFormat, setExportFormat] = useState("xlsx");
+  const [exportOnly, setExportOnly] = useState("");
+  const [exportSegment, setExportSegment] = useState("");
 
   const loadReports = useCallback(async () => {
     setBusy(true); setError("");
@@ -144,6 +147,16 @@ function App() {
     return true;
   }), [records, query, department, status]);
 
+  function exportUrl() {
+    const p = new URLSearchParams({format:exportFormat,highlight:"true",summary:"true"});
+    if(exportOnly)p.set("only",exportOnly);if(exportSegment)p.set("segment",exportSegment);
+    if(department!=="all"){const rec=records.find(r=>r._department===department);if(rec?.dept_code)p.set("dept",rec.dept_code);}
+    return `/api/reports/${detail.id}/export?${p.toString()}`;
+  }
+  async function deleteReport() {
+    if(!window.confirm("Delete this attendance report and its associated correction history?"))return;
+    try{await api(`/api/reports/${selectedId}`,{method:"DELETE"});setDetail(null);setSelectedId(null);await loadReports();}catch(err){setError(err.message);}
+  }
   async function openHistory(record) { try { setHistoryRecord(await api(`/api/records/${record.id}/history`)); } catch (err) { setError(err.message); } }
 
   function startFix(record) {
@@ -215,7 +228,7 @@ function App() {
         <div className="page-heading">
           <div><p className="eyebrow">ATTENDANCE OVERVIEW</p><h1>Daily reports</h1><p className="muted">Review attendance, identify exceptions and track resolutions.</p></div>
           <div className="heading-actions"><button className="secondary-btn" onClick={loadReports}><RefreshCw size={16}/> Refresh</button>
-            {detail && <a className="primary-btn link-btn" href={`/api/reports/${detail.id}/export?format=xlsx&highlight=true&summary=true`}><ArrowDownToLine size={16}/> Export Excel</a>}
+            {detail && <><select className="export-select" value={exportFormat} onChange={e=>setExportFormat(e.target.value)}><option value="xlsx">Excel</option><option value="csv">CSV</option></select><select className="export-select" value={exportOnly} onChange={e=>setExportOnly(e.target.value)}><option value="">All employees</option><option value="flagged">Flagged</option><option value="pending">Pending</option><option value="halfday">Half day</option><option value="mispunch">Mispunch</option><option value="absent">Absent</option><option value="corrected">Resolved</option></select><select className="export-select" value={exportSegment} onChange={e=>setExportSegment(e.target.value)}><option value="">All segments</option><option value="indian">Indian</option><option value="local">Local</option><option value="other">Other</option></select><a className="primary-btn link-btn" href={exportUrl()}><ArrowDownToLine size={16}/> Export</a>{user.role==="admin"&&<button className="secondary-btn" onClick={deleteReport}>Delete report</button>}</>}
           </div>
         </div>
         {error && <div className="notice-error"><AlertCircle size={17}/>{error}</div>}
