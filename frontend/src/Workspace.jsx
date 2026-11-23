@@ -49,7 +49,7 @@ export default function Workspace({ view, user, notify, onOpenReport }) {
     const r=await Promise.all([api("/api/audit?"+p),reset?api("/api/audit/stats?period="+period):Promise.resolve(stats)]);
     setEvents(old=>reset?r[0].events:old.concat(r[0].events));setHasMore(r[0].has_more);setBefore(r[0].next_before_id);if(reset)setStats(r[1]);
   }
-  function auditExportUrl(){const p=new URLSearchParams({format:"csv",period});Object.entries(filters).forEach(([k,v])=>{if(v)p.set(k,String(v));});return "/api/audit/export?"+p;}
+  function auditExportUrl(){const p=new URLSearchParams({format:"csv",period});Object.entries(filters).forEach(([k,v])=>{if(v)p.set(k,String(v));});p.set("include_views",filters.include_views?"true":"false");return "/api/audit/export?"+p;}
   async function remove(path){if(!window.confirm("Delete this item?"))return;try{await api(path,{method:"DELETE"});notify?.("Deleted");load();}catch(e){setError(e.message);}}
   function userDialog(u){setEditing(u);setForm(u?{...u,password:""}:{role:"hod",segment:"indian",departments:[],is_active:true,must_change_password:true});setDialog("user");}
   async function saveUser(e){e.preventDefault();const b={full_name:form.full_name||"",role:form.role,segment:form.segment||"all",departments:form.departments||[],must_change_password:form.must_change_password!==false};try{if(editing){if(form.password)b.password=form.password;b.is_active=form.is_active;await api("/api/users/"+editing.id,{method:"PATCH",json:b});}else{b.username=form.username;b.password=form.password;await api("/api/users",{method:"POST",json:b});}setDialog("");notify?.("User saved");load();}catch(e){setError(e.message);}}
