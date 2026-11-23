@@ -3,7 +3,8 @@ import Workspace from "./Workspace.jsx";
 import {
   Activity, AlertCircle, AlertTriangle, ArrowDownToLine, CalendarDays,
   CheckCircle2, ChevronDown, ChevronRight, Clock3, FileSpreadsheet,
-  Filter, KeyRound, LogOut, RefreshCw, Search, ShieldCheck, Users, XCircle
+  Filter, KeyRound, LogOut, RefreshCw, Search, ShieldCheck, Users, XCircle,
+  Grid2X2, List, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 async function api(path, options = {}) {
@@ -102,6 +103,8 @@ function App() {
   const [department, setDepartment] = useState("all");
   const [segment, setSegment] = useState("all");
   const [grouped, setGrouped] = useState(false);
+  const [viewMode, setViewMode] = useState("cards");
+  const [page, setPage] = useState(1);
   const [exportFormat, setExportFormat] = useState("xlsx");
   const [exportOnly, setExportOnly] = useState("");
   const [exportSegment, setExportSegment] = useState("");
@@ -153,6 +156,11 @@ function App() {
     return true;
   }), [records, query, department, segment, status]);
 
+  const pageSize = 24;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageRecords = filtered.slice((page - 1) * pageSize, page * pageSize);
+  useEffect(() => { setPage(1); }, [query, status, department, segment, selectedId, viewMode]);
+
   function exportUrl() {
     const p = new URLSearchParams({format:exportFormat,highlight:"true",summary:"true"});
     if(exportOnly)p.set("only",exportOnly);if(exportSegment)p.set("segment",exportSegment);
@@ -164,11 +172,10 @@ function App() {
     try{await api(`/api/reports/${selectedId}`,{method:"DELETE"});setDetail(null);setSelectedId(null);await loadReports();}catch(err){setError(err.message);}
   }
   const renderRecord = record => <tr key={record.id}><td><b className="employee-name">{record.name || "—"}</b>{record.correction?.remark && <small className="row-note">{record.correction.remark}</small>}</td><td className="mono">{record.paycode || "—"}</td><td>{record.dept_name || record._department || "—"}</td><td>{record.shift || "—"}</td><td className="mono">{record.time_in || "—"}</td><td className="mono">{record.time_out || "—"}</td><td className="mono">{record.hrs || "—"}</td><td><StatusPill record={record}/></td><td className="row-actions">{record.can_correct && (record.is_corrected ? <button className="text-action" onClick={()=>undoFix(record)}>Undo</button> : <button className="text-action" onClick={()=>startFix(record)}>Correct</button>)} <button className="text-action" onClick={()=>openHistory(record)}>History</button></td></tr>;
-  const visibleRecords = filtered.slice(0,500);
-  const tableRows = grouped ? [...new Set(visibleRecords.map(r=>r._department||"Unassigned"))].flatMap(dept=>[
-    <tr key={"group-"+dept} className="department-group-row"><td colSpan={9}>{dept} · {visibleRecords.filter(r=>(r._department||"Unassigned")===dept).length} employees</td></tr>,
-    ...visibleRecords.filter(r=>(r._department||"Unassigned")===dept).map(renderRecord)
-  ]) : visibleRecords.map(renderRecord);
+  const tableRows = grouped ? [...new Set(pageRecords.map(r=>r._department||"Unassigned"))].flatMap(dept=>[
+    <tr key={"group-"+dept} className="department-group-row"><td colSpan={9}>{dept} · {pageRecords.filter(r=>(r._department||"Unassigned")===dept).length} employees</td></tr>,
+    ...pageRecords.filter(r=>(r._department||"Unassigned")===dept).map(renderRecord)
+  ]) : pageRecords.map(renderRecord);
 
   async function openHistory(record) { try { setHistoryRecord(await api(`/api/records/${record.id}/history`)); } catch (err) { setError(err.message); } }
   async function openReportHistory() { try { setReportHistory(await api(`/api/reports/${selectedId}/history`)); } catch (err) { setError(err.message); } }
@@ -257,8 +264,17 @@ function App() {
             <Metric icon={Clock3} label="Pending action" value={summary.pending ?? detail.pending} tone="orange"/>
             <Metric icon={CheckCircle2} label="Resolved" value={summary.corrected ?? detail.corrected} tone="green"/>
           </section>
+          <section className="attendance-snapshot">
+            <div className="snapshot-heading"><div><span className="eyebrow">DAILY SNAPSHOT</span><h2>Attendance distribution</h2></div><span>{number(summary.total ?? detail.total)} employees</span></div>
+            <div className="snapshot-bar" role="img" aria-label="Attendance distribution">
+              <span className="snapshot-present" style={{width:`${Math.min(100,Number(summary.total ?? detail.total) ? Number(summary.present ?? detail.present)*100/Number(summary.total ?? detail.total) : 0)}%`}} />
+              <span className="snapshot-absent" style={{width:`${Math.min(100,Number(summary.total ?? detail.total) ? Number(summary.absent ?? detail.absent)*100/Number(summary.total ?? detail.total) : 0)}%`}} />
+              <span className="snapshot-other" style={{width:`${Math.min(100,Number(summary.total ?? detail.total) ? (Number(summary.halfday ?? detail.halfday)+Number(summary.mispunch ?? detail.mispunch)+Number(summary.warnings ?? detail.warnings))*100/Number(summary.total ?? detail.total) : 0)}%`}} />
+            </div>
+            <div className="snapshot-legend"><span><i className="legend-present"/>Present <b>{number(summary.present ?? detail.present)}</b></span><span><i className="legend-absent"/>Absent <b>{number(summary.absent ?? detail.absent)}</b></span><span><i className="legend-other"/>Other / review <b>{number(Number(summary.halfday ?? detail.halfday)+Number(summary.mispunch ?? detail.mispunch)+Number(summary.warnings ?? detail.warnings))}</b></span></div>
+          </section>
           <section className="table-panel">
-            <div className="panel-heading"><div><h2>Employee attendance</h2><p>{number(filtered.length)} of {number(records.length)} employees shown</p></div><span className="live-tag"><i/> Report data</span></div>
+            <div className="panel-heading"><div><h2>Employee attendance</h2><p>{number(filtered.length)} matching employees · {number(records.length)} total</p></div><div className="panel-tools"><span className="live-tag"><i/> Report data</span><div className="view-switch" aria-label="Attendance display"><button className={viewMode==="cards"?"selected":""} title="Card view" onClick={()=>setViewMode("cards")}><Grid2X2 size={16}/><span>Cards</span></button><button className={viewMode==="table"?"selected":""} title="Table view" onClick={()=>setViewMode("table")}><List size={16}/><span>Table</span></button></div></div></div>
             <div className="filters">
               <div className="search-box"><Search size={17}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search employee or paycode…"/>{query && <button className="clear-search" onClick={() => setQuery("")}><XCircle size={15}/></button>}</div>
               <div className="select-wrap"><Filter size={15}/><select value={department} onChange={e => setDepartment(e.target.value)}><option value="all">All departments</option>{departments.map(d => <option key={d} value={d}>{d}</option>)}</select><ChevronDown size={14}/></div>
@@ -266,10 +282,8 @@ function App() {
               <label className="group-toggle"><input type="checkbox" checked={grouped} onChange={e=>setGrouped(e.target.checked)}/> Group by department</label>
               <div className="select-wrap"><select value={status} onChange={e => setStatus(e.target.value)}><option value="all">All statuses</option><option value="present">Present</option><option value="absent">Absent</option><option value="halfday">Half day</option><option value="mispunch">Mispunch</option><option value="review">Needs review</option><option value="pending">Pending action</option><option value="resolved">Resolved</option></select><ChevronDown size={14}/></div>
             </div>
-            <div className="table-scroll"><table><thead><tr><th>EMPLOYEE</th><th>PAYCODE</th><th>DEPARTMENT</th><th>SHIFT</th><th>IN</th><th>OUT</th><th>HOURS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
-              <tbody>{tableRows}</tbody>
-            </table></div>
-            {filtered.length > 500 && <div className="table-footnote">Showing first 500 rows. Use search or filters to narrow the list.</div>}
+            {viewMode==="cards" ? <div className="employee-grid">{pageRecords.map(record=><article className="employee-card" key={record.id}><div className="employee-card-top"><div className="employee-avatar">{(record.name||"—").trim().slice(0,1).toUpperCase()}</div><div className="employee-card-identity"><b>{record.name||"—"}</b><small>{record.paycode||"No paycode"}</small></div><StatusPill record={record}/></div><div className="employee-card-meta"><span><small>Department</small><b>{record.dept_name||record._department||"—"}</b></span><span><small>Shift</small><b>{record.shift||"—"}</b></span></div><div className="employee-card-times"><span><small>Clock in</small><b>{record.time_in||"—"}</b></span><span><small>Clock out</small><b>{record.time_out||"—"}</b></span><span><small>Hours</small><b>{record.hrs||"—"}</b></span></div>{record.correction?.remark&&<p className="employee-card-note">{record.correction.remark}</p>}<div className="employee-card-actions">{record.can_correct&&(record.is_corrected?<button className="text-action" onClick={()=>undoFix(record)}>Undo correction</button>:<button className="text-action" onClick={()=>startFix(record)}>Correct attendance</button>)}<button className="text-action" onClick={()=>openHistory(record)}>View history</button></div></article>)}</div> : <div className="table-scroll"><table><thead><tr><th>EMPLOYEE</th><th>PAYCODE</th><th>DEPARTMENT</th><th>SHIFT</th><th>IN</th><th>OUT</th><th>HOURS</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>{tableRows}</tbody></table></div>}
+            {filtered.length>pageSize&&<div className="pagination"><span>Showing <b>{number((page-1)*pageSize+1)}–{number(Math.min(page*pageSize,filtered.length))}</b> of <b>{number(filtered.length)}</b></span><div><button disabled={page===1} onClick={()=>setPage(p=>Math.max(1,p-1))}><ChevronLeft size={16}/> Previous</button><span>Page {page} of {pageCount}</span><button disabled={page===pageCount} onClick={()=>setPage(p=>Math.min(pageCount,p+1))}>Next <ChevronRight size={16}/></button></div></div>}
             {!filtered.length && <div className="empty-table">No employees match these filters.</div>}
           </section>
         </>}
