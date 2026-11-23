@@ -94,6 +94,7 @@ function App() {
   const [passwordError, setPasswordError] = useState("");
   const [authReady, setAuthReady] = useState(false);
   const [reports, setReports] = useState([]);
+  const [expandedMonth, setExpandedMonth] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -134,6 +135,27 @@ function App() {
 
   useEffect(() => { if (user) { loadReports(); if (user.must_change_password) setShowPassword(true); } }, [user, loadReports]);
   useEffect(() => { if (selectedId) loadDetail(selectedId); else setDetail(null); }, [selectedId, loadDetail]);
+
+  const monthlyReports = useMemo(() => {
+    const groups = new Map();
+    [...reports].sort((a,b) => String(b.report_date || "").localeCompare(String(a.report_date || ""))).forEach(report => {
+      const key = String(report.report_date || "").slice(0,7) || "unknown";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(report);
+    });
+    return [...groups.entries()].map(([key, items]) => {
+      const [year, month] = key.split("-").map(Number);
+      const label = key === "unknown" ? "Undated reports" : new Date(year, month - 1, 1).toLocaleDateString(undefined,{month:"long",year:"numeric"});
+      return { key, label, items };
+    });
+  }, [reports]);
+
+  useEffect(() => {
+    if (!monthlyReports.length) { setExpandedMonth(""); return; }
+    const selected = reports.find(report => report.id === selectedId);
+    const selectedMonth = selected?.report_date ? String(selected.report_date).slice(0,7) : "";
+    setExpandedMonth(current => current || selectedMonth || monthlyReports[0].key);
+  }, [monthlyReports, reports, selectedId]);
 
   const records = useMemo(() => (detail?.departments || []).flatMap(group =>
     (group.records || []).map(record => ({ ...record, _department: group.name || group.code }))
@@ -234,13 +256,22 @@ function App() {
         <div className="side-label">WORKSPACE</div>
         <div className="nav-item active"><Activity size={17}/> Reports <span className="nav-count">{reports.length}</span></div>
         <div className="side-label report-label">ATTENDANCE REPORTS</div>
-        <div className="report-list-head"><span>Daily reports</span><button className="icon-btn small" onClick={loadReports} title="Refresh"><RefreshCw size={15}/></button></div>
-        <div className="report-list">
-          {reports.map(report => <button key={report.id} className={`report-link ${selectedId === report.id ? "selected" : ""}`} onClick={() => setSelectedId(report.id)}>
-            <span className="report-date"><CalendarDays size={15}/>{dateLabel(report.report_date)}</span>
-            <span className="report-mini"><span>{number(report.total)} staff</span>{report.pending > 0 && <em>{number(report.pending)} pending</em>}</span>
-          </button>)}
-          {!reports.length && <p className="empty-side">{busy ? "Loading reports…" : "No reports available."}</p>}
+        <div className="report-list-head"><span>Monthly attendance</span><button className="icon-btn small" onClick={loadReports} title="Refresh reports"><RefreshCw size={15}/></button></div>
+        <div className="report-list monthly-report-list">
+          {monthlyReports.map(month => <section className={`month-group ${expandedMonth === month.key ? "expanded" : ""}`} key={month.key}>
+            <button className="month-heading" aria-expanded={expandedMonth === month.key} onClick={() => setExpandedMonth(current => current === month.key ? "" : month.key)}>
+              <span className="month-icon"><CalendarDays size={15}/></span>
+              <span className="month-title"><b>{month.label}</b><small>{month.items.length} {month.items.length === 1 ? "report" : "reports"}</small></span>
+              <ChevronDown size={15} className="month-chevron"/>
+            </button>
+            {expandedMonth === month.key && <div className="month-dates">
+              {month.items.map(report => <button key={report.id} className={`report-link ${selectedId === report.id ? "selected" : ""}`} onClick={() => setSelectedId(report.id)}>
+                <span className="report-date"><span className="date-day">{String(report.report_date || "").slice(8,10) || "—"}</span><span>{dateLabel(report.report_date)}</span></span>
+                <span className="report-mini"><span>{number(report.total)} staff</span>{report.pending > 0 && <em>{number(report.pending)} pending</em>}</span>
+              </button>)}
+            </div>}
+          </section>)}
+          {!reports.length && <p className="empty-side">{busy ? "Loading reports…" : "No monthly reports available."}</p>}
         </div>
         <div className="sidebar-foot"><ShieldCheck size={16}/><span>Role-based access enabled</span></div>
       </aside>
