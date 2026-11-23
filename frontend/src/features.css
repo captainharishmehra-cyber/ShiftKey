@@ -55,7 +55,7 @@
 .feature-form textarea{width:100%;border:1px solid #dfe5ee;border-radius:8px;padding:9px;font:11px ui-monospace,monospace;color:#344258;resize:vertical}
 .feature-form-actions{display:flex;justify-content:flex-end;gap:8px}
 .feature-inline-check input,.feature-checks input{accent-color:#315fe8}
-.row-actions{display:flex;gap:6px}
+.row-actions{display:table-cell;white-space:nowrap}.row-actions .text-action{margin-right:4px}
 .text-action{border:0;background:#edf2ff;color:#315fe8;padding:5px 8px;border-radius:6px;font-size:9px;font-weight:700}
 .text-action:hover{background:#dfe8ff}
 .history-line{padding:9px 0;border-bottom:1px solid #edf0f5}
