@@ -561,3 +561,140 @@ table.grid { width: 100%; border-collapse: separate; border-spacing: 0; font-siz
 .run-log { font-family: var(--mono); font-size: 12px; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; margin-top: 10px; white-space: pre-wrap; max-height: 220px; overflow: auto; }
 .btn.sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (max-width: 960px) { .form-grid.three { grid-template-columns: 1fr; } .schema-pane { display: none; } }
+
+
+/* =================== Reports readability refresh ===================
+   Presentation-only overrides. Existing report rendering and interactions
+   remain in app.js unchanged.
+*/
+#reportsLayout .main { max-width: none; padding: 30px clamp(18px, 2.6vw, 40px) 64px; }
+#reportView { max-width: 1680px; margin: 0 auto; }
+#reportView .report-head {
+  align-items: center;
+  padding: 2px 0 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+#reportView .report-title h1 {
+  font-size: clamp(25px, 2.1vw, 32px);
+  line-height: 1.18;
+  letter-spacing: -.035em;
+}
+#reportView .eyebrow { font-size: 11px; letter-spacing: .1em; }
+#reportView .meta { gap: 6px 16px; font-size: 12.5px; }
+#reportView .meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+#reportView .actions { gap: 7px; }
+#reportView .stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+#reportView .stat {
+  min-height: 94px;
+  padding: 15px 16px 13px;
+  border-radius: 13px;
+  box-shadow: 0 1px 2px rgba(20,24,40,.035);
+}
+#reportView .stat .v { font-size: 29px; line-height: 1.15; }
+#reportView .stat .l { margin-top: 3px; font-size: 12.5px; font-weight: 550; }
+#reportView .stat .pct { top: 14px; right: 15px; font-size: 11.5px; }
+#reportView .stat:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+#reportView .attention {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+#reportView .att-card { min-width: 0; border-radius: 13px; }
+#reportView .att-card header { min-height: 44px; padding: 9px 13px; }
+#reportView .att-card header h3 { font-size: 13px; }
+#reportView .att-list { max-height: 168px; }
+#reportView .att-list li { padding: 7px 13px; }
+#reportView .att-list .n { font-size: 12.5px; }
+#reportView .att-list .m { font-size: 11.5px; line-height: 1.4; }
+#reportView .att-list .t { font-size: 11.5px; }
+#reportView .att-empty { padding: 15px 12px; }
+#reportView .toolbar {
+  position: relative;
+  gap: 9px;
+  padding: 13px;
+  margin: 0 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+#reportView .search { flex: 1 1 240px; min-width: 220px; }
+#reportView #deptFilter { flex: 0 1 230px; max-width: 230px; }
+#reportView .chips { gap: 5px; }
+#reportView .chip { height: 29px; padding: 0 10px; font-size: 12px; }
+#reportView .switch { margin-left: auto; }
+#reportView .table-wrap {
+  border-radius: 13px;
+  box-shadow: 0 1px 2px rgba(20,24,40,.035);
+  scrollbar-width: thin;
+}
+#reportView table.grid { min-width: 1040px; font-size: 13.5px; }
+#reportView .grid th {
+  padding: 12px 13px;
+  font-size: 10.5px;
+  letter-spacing: .075em;
+}
+#reportView .grid td { padding: 10px 13px; }
+#reportView .grid td.name { min-width: 170px; font-size: 13.5px; font-weight: 600; }
+#reportView .grid td.mono,
+#reportView .grid td.time { font-size: 12.5px; }
+#reportView .grid td.hrs { font-size: 13px; }
+#reportView .grid td.remarks { min-width: 180px; line-height: 1.45; }
+#reportView .grid tr.dept td { padding: 10px 13px; font-size: 11px; }
+#reportView .grid tbody tr.emp:hover td { background: color-mix(in srgb, var(--accent-soft) 38%, var(--surface)); }
+#reportView .grid tbody tr.emp.is-mis:hover td { background: var(--mis-soft); }
+#reportView .grid tbody tr.emp.is-hlf:hover td { background: var(--hlf-soft); }
+#reportView .status { padding: 3px 9px; font-size: 11px; }
+#reportView .table-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+#reportView button:focus-visible,
+#reportView input:focus-visible,
+#reportView select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (min-width: 1500px) {
+  #reportView .stats { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  #reportView .stat { min-height: 88px; }
+}
+@media (max-width: 1100px) {
+  #reportView .attention { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #reportView .attention .att-card:last-child { grid-column: 1 / -1; }
+  #reportView .toolbar { align-items: flex-start; }
+  #reportView .switch { margin-left: 0; }
+}
+@media (max-width: 700px) {
+  #reportsLayout .main { padding: 18px 12px 40px; }
+  #reportView .report-head { align-items: stretch; gap: 14px; }
+  #reportView .actions { width: 100%; }
+  #reportView .actions > * { flex: 0 0 auto; }
+  #reportView .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #reportView .stat { min-height: 82px; padding: 12px; }
+  #reportView .stat .v { font-size: 25px; }
+  #reportView .attention { grid-template-columns: 1fr; }
+  #reportView .attention .att-card:last-child { grid-column: auto; }
+  #reportView .toolbar { padding: 10px; gap: 8px; }
+  #reportView .search { flex-basis: 100%; min-width: 0; }
+  #reportView #deptFilter { flex: 1 1 100%; max-width: none; }
+  #reportView .chips { max-width: 100%; }
+  #reportView .switch { width: 100%; padding: 3px 0; }
+  #reportView .table-wrap { overflow-x: auto; }
+  #reportView table.grid { min-width: 980px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #reportView .stat:hover { transform: none; }
+}
