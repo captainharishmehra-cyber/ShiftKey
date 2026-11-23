@@ -98,6 +98,8 @@ function App() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [department, setDepartment] = useState("all");
+  const [segment, setSegment] = useState("all");
+  const [grouped, setGrouped] = useState(false);
   const [exportFormat, setExportFormat] = useState("xlsx");
   const [exportOnly, setExportOnly] = useState("");
   const [exportSegment, setExportSegment] = useState("");
@@ -138,6 +140,7 @@ function App() {
     const haystack = [record.name, record.paycode, record._department, record.shift].join(" ").toLowerCase();
     if (query && !haystack.includes(query.toLowerCase())) return false;
     if (department !== "all" && record._department !== department) return false;
+    if (segment !== "all" && record.segment !== segment) return false;
     if (status === "present" && !record.is_present) return false;
     if (status === "absent" && !record.is_absent) return false;
     if (status === "halfday" && !record.is_halfday) return false;
@@ -146,7 +149,7 @@ function App() {
     if (status === "pending" && !record.needs_action) return false;
     if (status === "resolved" && !record.is_corrected) return false;
     return true;
-  }), [records, query, department, status]);
+  }), [records, query, department, segment, status]);
 
   function exportUrl() {
     const p = new URLSearchParams({format:exportFormat,highlight:"true",summary:"true"});
@@ -158,6 +161,13 @@ function App() {
     if(!window.confirm("Delete this attendance report and its associated correction history?"))return;
     try{await api(`/api/reports/${selectedId}`,{method:"DELETE"});setDetail(null);setSelectedId(null);await loadReports();}catch(err){setError(err.message);}
   }
+  const renderRecord = record => <tr key={record.id}><td><b className="employee-name">{record.name || "—"}</b>{record.correction?.remark && <small className="row-note">{record.correction.remark}</small>}</td><td className="mono">{record.paycode || "—"}</td><td>{record.dept_name || record._department || "—"}</td><td>{record.shift || "—"}</td><td className="mono">{record.time_in || "—"}</td><td className="mono">{record.time_out || "—"}</td><td className="mono">{record.hrs || "—"}</td><td><StatusPill record={record}/></td><td className="row-actions">{["admin","hod"].includes(user.role) && (record.is_corrected ? <button className="text-action" onClick={()=>undoFix(record)}>Undo</button> : <button className="text-action" onClick={()=>startFix(record)}>Correct</button>)} <button className="text-action" onClick={()=>openHistory(record)}>History</button></td></tr>;
+  const visibleRecords = filtered.slice(0,500);
+  const tableRows = grouped ? [...new Set(visibleRecords.map(r=>r._department||"Unassigned"))].flatMap(dept=>[
+    <tr key={"group-"+dept} className="department-group-row"><td colSpan={9}>{dept} · {visibleRecords.filter(r=>(r._department||"Unassigned")===dept).length} employees</td></tr>,
+    ...visibleRecords.filter(r=>(r._department||"Unassigned")===dept).map(renderRecord)
+  ]) : visibleRecords.map(renderRecord);
+
   async function openHistory(record) { try { setHistoryRecord(await api(`/api/records/${record.id}/history`)); } catch (err) { setError(err.message); } }
 
   function startFix(record) {
@@ -249,10 +259,12 @@ function App() {
             <div className="filters">
               <div className="search-box"><Search size={17}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search employee or paycode…"/>{query && <button className="clear-search" onClick={() => setQuery("")}><XCircle size={15}/></button>}</div>
               <div className="select-wrap"><Filter size={15}/><select value={department} onChange={e => setDepartment(e.target.value)}><option value="all">All departments</option>{departments.map(d => <option key={d} value={d}>{d}</option>)}</select><ChevronDown size={14}/></div>
+              <div className="select-wrap"><select value={segment} onChange={e=>setSegment(e.target.value)}><option value="all">All segments</option><option value="indian">Indian</option><option value="local">Local</option><option value="other">Other</option></select><ChevronDown size={14}/></div>
+              <label className="group-toggle"><input type="checkbox" checked={grouped} onChange={e=>setGrouped(e.target.checked)}/> Group by department</label>
               <div className="select-wrap"><select value={status} onChange={e => setStatus(e.target.value)}><option value="all">All statuses</option><option value="present">Present</option><option value="absent">Absent</option><option value="halfday">Half day</option><option value="mispunch">Mispunch</option><option value="review">Needs review</option><option value="pending">Pending action</option><option value="resolved">Resolved</option></select><ChevronDown size={14}/></div>
             </div>
             <div className="table-scroll"><table><thead><tr><th>EMPLOYEE</th><th>PAYCODE</th><th>DEPARTMENT</th><th>SHIFT</th><th>IN</th><th>OUT</th><th>HOURS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
-              <tbody>{filtered.slice(0, 500).map(record => <tr key={record.id}><td><b className="employee-name">{record.name || "—"}</b>{record.correction?.remark && <small className="row-note">{record.correction.remark}</small>}</td><td className="mono">{record.paycode || "—"}</td><td>{record.dept_name || record._department || "—"}</td><td>{record.shift || "—"}</td><td className="mono">{record.time_in || "—"}</td><td className="mono">{record.time_out || "—"}</td><td className="mono">{record.hrs || "—"}</td><td><StatusPill record={record}/></td><td className="row-actions">{["admin","hod"].includes(user.role) && (record.is_corrected ? <button className="text-action" onClick={()=>undoFix(record)}>Undo</button> : <button className="text-action" onClick={()=>startFix(record)}>Correct</button>)} <button className="text-action" onClick={()=>openHistory(record)}>History</button></td></tr>)}</tbody>
+              <tbody>{tableRows}</tbody>
             </table></div>
             {filtered.length > 500 && <div className="table-footnote">Showing first 500 rows. Use search or filters to narrow the list.</div>}
             {!filtered.length && <div className="empty-table">No employees match these filters.</div>}
