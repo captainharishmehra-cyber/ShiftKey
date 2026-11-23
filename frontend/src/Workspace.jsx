@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./features.css";
 import { ArrowDownToLine, Database, FileClock, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, X } from "lucide-react";
 
 async function api(path, options = {}) {
