@@ -233,7 +233,7 @@ function App() {
         </div>
         {error && <div className="notice-error"><AlertCircle size={17}/>{error}</div>}
         {!detail ? <section className="empty-state"><FileSpreadsheet size={34}/><h2>Select a daily report</h2><p>Choose a date from the report list to see its attendance summary.</p></section> : <>
-          <section className="report-banner"><div><span className="banner-kicker">SELECTED REPORT</span><h2>{dateLabel(detail.report_date)}</h2><p>{detail.company || "ShiftKey"}{detail.title ? ` · ${detail.title}` : ""}</p></div><div className="banner-meta"><span>{detail.source_filename || "Attendance report"}</span><small>Imported {detail.uploaded_at ? new Date(detail.uploaded_at).toLocaleString() : "—"}</small></div></section>
+          <section className="report-banner"><div><span className="banner-kicker">SELECTED REPORT</span><h2>{dateLabel(detail.report_date)}</h2><p>{detail.company || "ShiftKey"}{detail.title ? ` · ${detail.title}` : ""}</p></div><div className="banner-meta"><span>{detail.source_filename || "Attendance report"}</span><small>Imported {detail.uploaded_at ? new Date(detail.uploaded_at).toLocaleString() : "—"}</small>{user.role==="admin" && detail.source_kind!=="sql" && <a className="banner-source" href={`/api/reports/${detail.id}/source`}>Download original source</a>}</div></section>
           <section className="metrics-grid">
             <Metric icon={Users} label="Total employees" value={summary.total ?? detail.total} tone="blue" note="In your access scope"/>
             <Metric icon={CheckCircle2} label="Present" value={summary.present ?? detail.present} tone="green"/>
