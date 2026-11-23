@@ -11,3 +11,28 @@
 @media(max-width:1250px){.metrics-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.employee-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.employee-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{position:static;height:auto}.report-list{max-height:250px}}
 @media(max-width:720px){.page-heading h1{font-size:26px}.heading-actions{justify-content:flex-start}.heading-actions>*{flex:1}.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.attendance-snapshot{padding:14px}.snapshot-legend{gap:10px}.panel-heading{align-items:flex-start;gap:12px;flex-direction:column}.panel-tools{width:100%;justify-content:space-between}.employee-grid{grid-template-columns:1fr;padding:0 10px 12px}.pagination{align-items:flex-start;flex-direction:column}.pagination>div{width:100%;justify-content:space-between}.table-scroll{max-height:none}.report-list{max-height:none}}
+
+
+/* Monthly report navigation */
+.monthly-report-list{gap:8px;padding:2px 1px 12px}
+.month-group{border:1px solid #edf0f5;border-radius:11px;background:#fff;overflow:hidden}
+.month-group.expanded{border-color:#dce5fb;box-shadow:0 3px 12px rgba(36,65,120,.045)}
+.month-heading{width:100%;display:flex;align-items:center;gap:10px;padding:11px 10px;border:0;background:#fff;text-align:left;color:#35445b}
+.month-heading:hover{background:#f8faff}
+.month-icon{width:31px;height:31px;display:grid;place-items:center;border-radius:9px;background:#edf2ff;color:#4268d8;flex:none}
+.month-title{flex:1;min-width:0}
+.month-title b{display:block;font-size:11px;font-weight:800;color:#35445b}
+.month-title small{display:block;margin-top:3px;color:#929daf;font-size:9px}
+.month-chevron{color:#8a97aa;transition:transform .18s}
+.month-group.expanded .month-chevron{transform:rotate(180deg);color:#315fe8}
+.month-dates{display:flex;flex-direction:column;gap:3px;padding:3px 7px 8px;border-top:1px solid #f0f2f6;background:#fbfcfe}
+.month-dates .report-link{padding:8px 7px}
+.month-dates .report-date{gap:8px;font-size:10px}
+.date-day{width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:#f0f3f8;color:#66758b;font-size:10px;font-weight:800;flex:none}
+.month-dates .report-link.selected .date-day{background:#315fe8;color:#fff}
+.month-dates .report-mini{padding-left:33px;margin-top:4px}
+@media(max-width:720px){
+ .monthly-report-list{display:flex;flex-direction:column;overflow:visible;max-height:none;width:100%}
+ .month-group{width:100%;flex:none}
+ .month-dates .report-link{min-width:0}
+}
