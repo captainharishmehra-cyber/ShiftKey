@@ -45,7 +45,7 @@ function Login({ onLogin }) {
     try {
       const user = await api("/api/auth/login", { method: "POST", json: { username: username.trim(), password } });
       setPassword(""); onLogin(user);
-    } catch (err) { if (err.status === 401) setUser(null); if (err.status === 428) setShowPassword(true); setError(err.message); }
+    } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
   return <main className="login-wrap">
@@ -82,6 +82,7 @@ function StatusPill({ record }) {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [notice, setNotice] = useState("");
   const [view, setView] = useState("reports");
   const [fixRecord, setFixRecord] = useState(null);
   const [fixForm, setFixForm] = useState({action:"shift_time",field:"out",time:"",remark:""});
