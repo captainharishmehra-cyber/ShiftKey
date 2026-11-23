@@ -187,14 +187,13 @@ function App() {
 
   async function logout() {
     try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-    setUser(null); setReports([]); setDetail(null); setSelectedId(null);
+    setUser(null); setView("reports"); setReports([]); setDetail(null); setSelectedId(null);
   }
 
   if (!authReady) return <div className="boot-screen"><div className="brand-mark">S</div><span>Loading ShiftKey…</span></div>;
-  if (!user) return <Login onLogin={setUser} />;
+  if (!user) return <Login onLogin={u=>{setUser(u);setView("reports");}} />;
 
   const summary = detail?.summary || {};
-  const canAdmin = user.role === "admin";
   return <div className="app-frame">
     <header className="topbar">
       <div className="brand"><div className="brand-mark">S</div><div><b>ShiftKey</b><small>People & attendance</small></div></div>
@@ -240,7 +239,9 @@ function App() {
             <Metric icon={XCircle} label="Absent" value={summary.absent ?? detail.absent} tone="slate"/>
             <Metric icon={Clock3} label="Half day" value={summary.halfday ?? detail.halfday} tone="orange"/>
             <Metric icon={AlertCircle} label="Mispunch" value={summary.mispunch ?? detail.mispunch} tone="red"/>
-            <Metric icon={AlertTriangle} label="Needs review" value={summary.pending ?? detail.pending ?? summary.warnings} tone="violet"/>
+            <Metric icon={AlertTriangle} label="Needs review" value={summary.warnings ?? detail.warnings} tone="violet"/>
+            <Metric icon={Clock3} label="Pending action" value={summary.pending ?? detail.pending} tone="orange"/>
+            <Metric icon={CheckCircle2} label="Resolved" value={summary.corrected ?? detail.corrected} tone="green"/>
           </section>
           <section className="table-panel">
             <div className="panel-heading"><div><h2>Employee attendance</h2><p>{number(filtered.length)} of {number(records.length)} employees shown</p></div><span className="live-tag"><i/> Report data</span></div>
