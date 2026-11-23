@@ -82,6 +82,9 @@ function StatusPill({ record }) {
 function App() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("reports");
+  const [fixRecord, setFixRecord] = useState(null);
+  const [fixForm, setFixForm] = useState({action:"shift_time",field:"out",time:"",remark:""});
+  const [historyRecord, setHistoryRecord] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [reports, setReports] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -137,6 +140,28 @@ function App() {
     if (status === "resolved" && !record.is_corrected) return false;
     return true;
   }), [records, query, department, status]);
+
+  async function openHistory(record) { try { setHistoryRecord(await api(`/api/records/${record.id}/history`)); } catch (err) { setError(err.message); } }
+
+  function startFix(record) {
+    const field = record.time_in && !record.time_out ? "out" : (!record.time_in && record.time_out ? "in" : "out");
+    const shiftTime = field === "out" ? record.shift_end : record.shift_start;
+    setFixRecord(record); setFixForm({action:shiftTime ? "shift_time" : "set_time",field,time:shiftTime || "",remark:""});
+  }
+  async function submitFix(event) {
+    event.preventDefault(); if (!fixRecord) return;
+    try {
+      const body = {action:fixForm.action,field:fixForm.field,remark:fixForm.remark};
+      if (fixForm.action === "set_time") body.time = fixForm.time;
+      await api(`/api/records/${fixRecord.id}/correction`,{method:"POST",json:body});
+      setFixRecord(null); await loadDetail(selectedId); await loadReports();
+    } catch(err) { setError(err.message); }
+  }
+  async function undoFix(record) {
+    if (!window.confirm("Revert this correction to the original machine values?")) return;
+    try { await api(`/api/records/${record.id}/correction`,{method:"DELETE"}); await loadDetail(selectedId); await loadReports(); }
+    catch(err) { setError(err.message); }
+  }
 
   async function logout() {
     try { await api("/api/auth/logout", { method: "POST" }); } catch {}
@@ -202,13 +227,22 @@ function App() {
               <div className="select-wrap"><Filter size={15}/><select value={department} onChange={e => setDepartment(e.target.value)}><option value="all">All departments</option>{departments.map(d => <option key={d} value={d}>{d}</option>)}</select><ChevronDown size={14}/></div>
               <div className="select-wrap"><select value={status} onChange={e => setStatus(e.target.value)}><option value="all">All statuses</option><option value="present">Present</option><option value="absent">Absent</option><option value="halfday">Half day</option><option value="mispunch">Mispunch</option><option value="review">Needs review</option><option value="pending">Pending action</option><option value="resolved">Resolved</option></select><ChevronDown size={14}/></div>
             </div>
-            <div className="table-scroll"><table><thead><tr><th>EMPLOYEE</th><th>PAYCODE</th><th>DEPARTMENT</th><th>SHIFT</th><th>IN</th><th>OUT</th><th>HOURS</th><th>STATUS</th></tr></thead>
-              <tbody>{filtered.slice(0, 500).map(record => <tr key={record.id}><td><b className="employee-name">{record.name || "—"}</b>{record.correction?.remark && <small className="row-note">{record.correction.remark}</small>}</td><td className="mono">{record.paycode || "—"}</td><td>{record.dept_name || record._department || "—"}</td><td>{record.shift || "—"}</td><td className="mono">{record.time_in || "—"}</td><td className="mono">{record.time_out || "—"}</td><td className="mono">{record.hrs || "—"}</td><td><StatusPill record={record}/></td></tr>)}</tbody>
+            <div className="table-scroll"><table><thead><tr><th>EMPLOYEE</th><th>PAYCODE</th><th>DEPARTMENT</th><th>SHIFT</th><th>IN</th><th>OUT</th><th>HOURS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+              <tbody>{filtered.slice(0, 500).map(record => <tr key={record.id}><td><b className="employee-name">{record.name || "—"}</b>{record.correction?.remark && <small className="row-note">{record.correction.remark}</small>}</td><td className="mono">{record.paycode || "—"}</td><td>{record.dept_name || record._department || "—"}</td><td>{record.shift || "—"}</td><td className="mono">{record.time_in || "—"}</td><td className="mono">{record.time_out || "—"}</td><td className="mono">{record.hrs || "—"}</td><td><StatusPill record={record}/></td><td className="row-actions">{["admin","hr","hod"].includes(user.role) && (record.is_corrected ? <button className="text-action" onClick={()=>undoFix(record)}>Undo</button> : <button className="text-action" onClick={()=>startFix(record)}>Correct</button>)} <button className="text-action" onClick={()=>openHistory(record)}>History</button></td></tr>)}</tbody>
             </table></div>
             {filtered.length > 500 && <div className="table-footnote">Showing first 500 rows. Use search or filters to narrow the list.</div>}
             {!filtered.length && <div className="empty-table">No employees match these filters.</div>}
           </section>
         </>}
+        {fixRecord && <div className="feature-overlay"><section className="feature-dialog"><header><h3>Correct attendance · {fixRecord.name}</h3><button className="icon-btn" onClick={()=>setFixRecord(null)}>×</button></header><form className="feature-form" onSubmit={submitFix}>
+          <p className="muted">Current punches: {fixRecord.time_in || "—"} → {fixRecord.time_out || "—"} · {fixRecord.status_label || fixRecord.status}</p>
+          <label className="feature-field"><span>Correction method</span><select value={fixForm.action} onChange={e=>setFixForm(f=>({...f,action:e.target.value}))}><option value="shift_time">Use scheduled shift time</option><option value="set_time">Enter a time manually</option></select></label>
+          <label className="feature-field"><span>Punch to correct</span><select value={fixForm.field} onChange={e=>setFixForm(f=>({...f,field:e.target.value}))}><option value="in">IN punch</option><option value="out">OUT punch</option></select></label>
+          {fixForm.action==="set_time" && <label className="feature-field"><span>Time (HH:MM)</span><input type="time" required value={fixForm.time} onChange={e=>setFixForm(f=>({...f,time:e.target.value}))}/></label>}
+          <label className="feature-field"><span>Remark</span><input maxLength="300" value={fixForm.remark} onChange={e=>setFixForm(f=>({...f,remark:e.target.value}))}/></label>
+          <button className="primary-btn">Save correction</button>
+        </form></section></div>}
+        {historyRecord && <div className="feature-overlay" onMouseDown={e=>e.target===e.currentTarget&&setHistoryRecord(null)}><section className="feature-dialog"><header><h3>Attendance history</h3><button className="icon-btn" onClick={()=>setHistoryRecord(null)}>×</button></header><div className="feature-form"><b>{historyRecord.record?.name} · {historyRecord.record?.paycode}</b><p>{historyRecord.report?.report_date} · {historyRecord.report?.source_filename}</p><h4>Event history</h4>{(historyRecord.events||[]).map(e=><div className="history-line" key={e.id}><b>{e.action_label || e.action}</b><small>{e.ts} · {e.actor?.name || e.actor?.username || "System"}</small><p>{e.summary}</p></div>)}<h4>Other attendance days</h4>{(historyRecord.other_days||[]).map(d=><p key={d.record_id}>{d.report_date}: {d.time_in||"—"} → {d.time_out||"—"} · {d.status}</p>)}</div></section></div>}
         <footer className="page-footer">ShiftKey · React frontend preview <span>Existing HRMS services and data</span></footer>
       }</> : <Workspace view={view} user={user} notify={message => setError(message)} />}</main>
     </div>
