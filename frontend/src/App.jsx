@@ -45,7 +45,7 @@ function Login({ onLogin }) {
     try {
       const user = await api("/api/auth/login", { method: "POST", json: { username: username.trim(), password } });
       setPassword(""); onLogin(user);
-    } catch (err) { setError(err.message); }
+    } catch (err) { if (err.status === 401) setUser(null); if (err.status === 428) setShowPassword(true); setError(err.message); }
     finally { setBusy(false); }
   }
   return <main className="login-wrap">
@@ -117,7 +117,7 @@ function App() {
   const loadDetail = useCallback(async id => {
     if (!id) { setDetail(null); return; }
     try { setDetail(await api(`/api/reports/${id}`)); setError(""); }
-    catch (err) { setError(err.message); }
+    catch (err) { if (err.status === 401) setUser(null); if (err.status === 428) setShowPassword(true); setError(err.message); }
   }, []);
 
   useEffect(() => {
