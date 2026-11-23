@@ -3,7 +3,7 @@ import Workspace from "./Workspace.jsx";
 import {
   Activity, AlertCircle, AlertTriangle, ArrowDownToLine, CalendarDays,
   CheckCircle2, ChevronDown, ChevronRight, Clock3, FileSpreadsheet,
-  Filter, LogOut, RefreshCw, Search, ShieldCheck, Users, XCircle
+  Filter, KeyRound, LogOut, RefreshCw, Search, ShieldCheck, Users, XCircle
 } from "lucide-react";
 
 async function api(path, options = {}) {
@@ -85,6 +85,9 @@ function App() {
   const [fixRecord, setFixRecord] = useState(null);
   const [fixForm, setFixForm] = useState({action:"shift_time",field:"out",time:"",remark:""});
   const [historyRecord, setHistoryRecord] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({current_password:"",new_password:""});
+  const [passwordError, setPasswordError] = useState("");
   const [authReady, setAuthReady] = useState(false);
   const [reports, setReports] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -118,7 +121,7 @@ function App() {
     })();
   }, []);
 
-  useEffect(() => { if (user) loadReports(); }, [user, loadReports]);
+  useEffect(() => { if (user) { loadReports(); if (user.must_change_password) setShowPassword(true); } }, [user, loadReports]);
   useEffect(() => { if (selectedId) loadDetail(selectedId); else setDetail(null); }, [selectedId, loadDetail]);
 
   const records = useMemo(() => (detail?.departments || []).flatMap(group =>
@@ -163,6 +166,12 @@ function App() {
     catch(err) { setError(err.message); }
   }
 
+  async function changePassword(event) {
+    event.preventDefault(); setPasswordError("");
+    try { const updated = await api("/api/me/password",{method:"POST",json:passwordForm}); setUser(updated); setPasswordForm({current_password:"",new_password:""}); setShowPassword(false); }
+    catch(err) { setPasswordError(err.message); }
+  }
+
   async function logout() {
     try { await api("/api/auth/logout", { method: "POST" }); } catch {}
     setUser(null); setReports([]); setDetail(null); setSelectedId(null);
@@ -184,7 +193,7 @@ function App() {
       <div className="top-actions">
         <span className="connection"><i/> Connected</span>
         <div className="user-chip"><span className="avatar">{(user.full_name || user.username || "U").slice(0,1).toUpperCase()}</span><span><b>{user.full_name || user.username}</b><small>{user.role?.toUpperCase()}</small></span></div>
-        <button className="icon-btn" title="Sign out" onClick={logout}><LogOut size={18}/></button>
+        <button className="icon-btn" title="Change password" onClick={()=>{setPasswordError("");setShowPassword(true);}}><KeyRound size={18}/></button><button className="icon-btn" title="Sign out" onClick={logout}><LogOut size={18}/></button>
       </div>
     </header>
     <div className="workspace">
@@ -246,6 +255,12 @@ function App() {
         <footer className="page-footer">ShiftKey · React frontend preview <span>Existing HRMS services and data</span></footer>
       }</> : <Workspace view={view} user={user} notify={message => setError(message)} />}</main>
     </div>
+    {showPassword && <div className="feature-overlay"><section className="feature-dialog"><header><h3>{user.must_change_password ? "Set a new password" : "Change password"}</h3>{!user.must_change_password && <button className="icon-btn" onClick={()=>setShowPassword(false)}>×</button>}</header><form className="feature-form" onSubmit={changePassword}>
+      <p className="muted">{user.must_change_password ? "Your account requires a password update before you continue." : "Choose a new password for your ShiftKey account."}</p>
+      <label className="feature-field"><span>Current password</span><input type="password" autoComplete="current-password" required value={passwordForm.current_password} onChange={e=>setPasswordForm(f=>({...f,current_password:e.target.value}))}/></label>
+      <label className="feature-field"><span>New password</span><input type="password" autoComplete="new-password" required minLength="10" value={passwordForm.new_password} onChange={e=>setPasswordForm(f=>({...f,new_password:e.target.value}))}/></label>
+      {passwordError && <p className="feature-error">{passwordError}</p>}<button className="primary-btn">Update password</button>
+    </form></section></div>}
   </div>;
 }
 
