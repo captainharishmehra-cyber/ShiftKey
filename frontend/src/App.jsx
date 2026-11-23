@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Workspace from "./Workspace.jsx";
 import {
   Activity, AlertCircle, AlertTriangle, ArrowDownToLine, CalendarDays,
   CheckCircle2, ChevronDown, ChevronRight, Clock3, FileSpreadsheet,
@@ -80,6 +81,7 @@ function StatusPill({ record }) {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [view, setView] = useState("reports");
   const [authReady, setAuthReady] = useState(false);
   const [reports, setReports] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -149,6 +151,11 @@ function App() {
   return <div className="app-frame">
     <header className="topbar">
       <div className="brand"><div className="brand-mark">S</div><div><b>ShiftKey</b><small>People & attendance</small></div></div>
+      <nav className="app-nav">
+        {["reports","corrections","audit",...(user.role === "admin" ? ["users","shifts","integrations"] : [])].map(item =>
+          <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>{item[0].toUpperCase()+item.slice(1)}</button>
+        )}
+      </nav>
       <div className="top-actions">
         <span className="connection"><i/> Connected</span>
         <div className="user-chip"><span className="avatar">{(user.full_name || user.username || "U").slice(0,1).toUpperCase()}</span><span><b>{user.full_name || user.username}</b><small>{user.role?.toUpperCase()}</small></span></div>
@@ -170,7 +177,7 @@ function App() {
         </div>
         <div className="sidebar-foot"><ShieldCheck size={16}/><span>Role-based access enabled</span></div>
       </aside>
-      <main className="content">
+      <main className="content">{view === "reports" ? <>{
         <div className="page-heading">
           <div><p className="eyebrow">ATTENDANCE OVERVIEW</p><h1>Daily reports</h1><p className="muted">Review attendance, identify exceptions and track resolutions.</p></div>
           <div className="heading-actions"><button className="secondary-btn" onClick={loadReports}><RefreshCw size={16}/> Refresh</button>
@@ -203,7 +210,7 @@ function App() {
           </section>
         </>}
         <footer className="page-footer">ShiftKey · React frontend preview <span>Existing HRMS services and data</span></footer>
-      </main>
+      }</> : <Workspace view={view} user={user} notify={message => setError(message)} />}</main>
     </div>
   </div>;
 }
