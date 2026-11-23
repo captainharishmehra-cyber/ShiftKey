@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feature/react-frontend-migration]
+    branches: [main]
 
 jobs:
   frontend:
@@ -23,6 +23,6 @@ jobs:
         working-directory: frontend
         run: npm run build
       - name: Verify built app assets
-        run: test -s app/static/react/index.html && find app/static/react/assets -type f -maxdepth 1 -print
+        run: test -s app/static/react/index.html && find app/static/react/assets -maxdepth 1 -type f -print
       - name: Build production Docker image
         run: docker build -t shiftkey-react-check .
