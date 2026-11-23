@@ -60,3 +60,15 @@
 .text-action:hover{background:#dfe8ff}
 .history-line{padding:9px 0;border-bottom:1px solid #edf0f5}
 .history-line b,.history-line small{display:block}.history-line small{font-size:9px;color:#8c98aa;margin-top:3px}.history-line p{font-size:10px;color:#536177;margin:5px 0 0}
+
+.schema-layout{display:grid;grid-template-columns:minmax(130px,35%) 1fr;min-height:220px}
+.schema-layout aside{border-right:1px solid #edf0f5;padding:10px;max-height:55vh;overflow:auto}
+.schema-table-btn{display:block;width:100%;border:0;background:transparent;text-align:left;padding:8px;border-radius:6px;color:#536177;font-size:10px}
+.schema-table-btn:hover{background:#edf2ff;color:#315fe8}
+.schema-layout>div{padding:14px;min-width:0;max-height:55vh;overflow:auto;font-size:10px;color:#536177}
+.schema-layout pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f8fb;padding:9px;border-radius:7px}
+.console-result{padding:0 18px 18px}.console-result>p{font-size:10px;color:#77849a}
+.notice-success{padding:10px 13px;margin:0 0 16px;background:#e8f7f0;color:#16865b;border:1px solid #ccebdc;border-radius:9px;font-size:11px}
+.export-select{height:37px;border:1px solid var(--line);border-radius:9px;padding:0 9px;background:#fff;color:#536177;font-size:10px}
+.sessions-panel{padding:0 0 12px}.sessions-panel h3{font:700 13px Manrope;padding:0 20px}
+@media(max-width:720px){.schema-layout{grid-template-columns:1fr}.schema-layout aside{border-right:0;border-bottom:1px solid #edf0f5;display:flex;overflow:auto}.schema-table-btn{min-width:max-content;width:auto}}
