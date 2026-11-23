@@ -1,3 +1,11 @@
+FROM node:22-alpine AS frontend-build
+
+WORKDIR /frontend
+COPY frontend/package.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -14,6 +22,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY app ./app
+COPY --from=frontend-build /app/static/react ./app/static/react
 
 RUN useradd --create-home --uid 10001 shiftkey \
  && mkdir -p /srv/data && chown -R shiftkey:shiftkey /srv
