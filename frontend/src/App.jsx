@@ -154,7 +154,7 @@ function App() {
     if (!monthlyReports.length) { setExpandedMonth(""); return; }
     const selected = reports.find(report => report.id === selectedId);
     const selectedMonth = selected?.report_date ? String(selected.report_date).slice(0,7) : "";
-    setExpandedMonth(current => current || selectedMonth || monthlyReports[0].key);
+    setExpandedMonth(current => selectedMonth && selectedMonth !== current ? selectedMonth : (current || selectedMonth || monthlyReports[0].key));
   }, [monthlyReports, reports, selectedId]);
 
   const records = useMemo(() => (detail?.departments || []).flatMap(group =>
