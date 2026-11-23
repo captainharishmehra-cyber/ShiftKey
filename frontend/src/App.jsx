@@ -4,7 +4,7 @@ import {
   Activity, AlertCircle, AlertTriangle, ArrowDownToLine, CalendarDays,
   CheckCircle2, ChevronDown, ChevronRight, Clock3, FileSpreadsheet,
   Filter, KeyRound, LogOut, RefreshCw, Search, ShieldCheck, Users, XCircle,
-  Grid2X2, List, ChevronLeft, ChevronRight
+  Grid2X2, List, ChevronLeft
 } from "lucide-react";
 
 async function api(path, options = {}) {
